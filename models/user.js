@@ -20,7 +20,9 @@ const userSchema = new Schema(
       default: "starter",
     },
     token: String,
+    avatarURL: String,
   },
+
   { versionKey: false, timestamps: true }
 );
 
@@ -29,6 +31,7 @@ userSchema.post("save", handleMongooseError);
 const registerSchema = Joi.object({
   password: Joi.string().required(),
   email: Joi.string().required(),
+  avatarURL: Joi.string(),
 });
 
 const loginSchema = Joi.object({
