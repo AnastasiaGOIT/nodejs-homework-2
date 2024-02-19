@@ -48,7 +48,7 @@ const register = async (req, res) => {
 
     const verifyEmail = {
       from: "App admin <example@mail.ua>",
-      to: "qw@example.com",
+      to: email,
       subject: "Test",
       html: `<a href="${BASE_URL}/users/verify/${verificationToken}">Click to verify</a>`,
       text: "Test email",
@@ -81,14 +81,15 @@ const verifyEmail = async (req, res) => {
 
 const resendVerifyEmail = async (req, res) => {
   const { email } = req.body;
-  const { verificationToken } = req.params;
   const user = User.findOne({ email });
+
   if (!user) {
-    res.json(400, "missing required field email");
+    throw HttpError(400, "missing required field email");
   }
   if (user.verify) {
-    res.json(400, "Verification has already been passed");
+    res.json({ message: "Verification has already been passed" });
   }
+
   const transport = nodemailer.createTransport({
     host: "sandbox.smtp.mailtrap.io",
     port: 2525,
@@ -99,9 +100,9 @@ const resendVerifyEmail = async (req, res) => {
   });
   const verifyEmail = {
     from: "App admin <example@mail.ua>",
-    to: "q@example.com",
+    to: email,
     subject: "Test",
-    html: `<a href="${BASE_URL}/users/verify/${verificationToken}">Click to verify</a>`,
+    html: `<a href="${BASE_URL}/users/verify/${user.verificationToken}">Click to verify</a>`,
     text: "Test email",
   };
 
