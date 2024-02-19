@@ -6,7 +6,7 @@ const { META_PASSWORD } = process.env;
 
 const nodeMailerConfig = {
   host: "smtp.meta.ua",
-  port: 465,
+  port: 25,
   secure: true,
   auth: {
     user: "goit3.meta.ua",
@@ -18,7 +18,7 @@ const transport = nodemailer.createTransport(nodeMailerConfig);
 
 const email = {
   from: "goit3.meta.ua",
-  to: "mejicek215@fkcod.com",
+  to: "hejace1274@fkcod.com",
   subject: "Test",
   text: "Test email",
 };
