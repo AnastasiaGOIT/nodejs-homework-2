@@ -1,4 +1,8 @@
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+
+require("dotenv").config();
+
 const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
 const fs = require("fs/promises");
@@ -6,9 +10,8 @@ const path = require("path");
 const Jimp = require("jimp");
 const { nanoid } = require("nanoid");
 const { User } = require("../models/user.js");
-const { HttpError,sendEmail } = require("../helpers");
+const { HttpError, sendEmail } = require("../helpers");
 const ctrlWrapper = require("../helpers/ctrlWrapper.js");
-
 
 const { SECRET_KEY, BASE_URL } = process.env;
 
@@ -38,7 +41,26 @@ const register = async (req, res) => {
     html: `<a href="${BASE_URL}/auth/verify/:${verificationToken}">Click to verify</a>`,
   };
 
-  await sendEmail(verifyEmail);
+  try {
+    const transport = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: "3961a8d39e9e5f",
+        pass: "bccd33d93d5105",
+      },
+    });
+
+    const email = {
+      from: "App admin <example@mail.ua>",
+      to: "tet@example.com",
+      subject: "Test",
+      html: "<h1>Hello</h1>",
+      text: "Test email",
+    };
+    await transport.sendMail(email);
+    await sendEmail(verifyEmail);
+  } catch (error) {}
 
   res.status(201).json({
     user: {
