@@ -35,11 +35,6 @@ const register = async (req, res) => {
     avatarURL,
     verificationToken,
   });
-  const verifyEmail = {
-    to: email,
-    subject: "Verify email",
-    html: `<a href="${BASE_URL}/auth/verify/:${verificationToken}">Click to verify</a>`,
-  };
 
   try {
     const transport = nodemailer.createTransport({
@@ -51,15 +46,15 @@ const register = async (req, res) => {
       },
     });
 
-    const email = {
+    const verifyEmail = {
       from: "App admin <example@mail.ua>",
-      to: "tet@example.com",
+      to: "qw@example.com",
       subject: "Test",
-      html: "<h1>Hello</h1>",
+      html: `<a href="${BASE_URL}/users/verify/${verificationToken}">Click to verify</a>`,
       text: "Test email",
     };
-    await transport.sendMail(email);
-    await sendEmail(verifyEmail);
+
+    await transport.sendMail(verifyEmail);
   } catch (error) {}
 
   res.status(201).json({
@@ -71,6 +66,50 @@ const register = async (req, res) => {
   });
 };
 
+const verifyEmail = async (req, res) => {
+  const { verificationToken } = req.params;
+  const user = await User.findOne({ verificationToken });
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+  await User.findByIdAndUpdate(user._id, {
+    verify: true,
+    verificationToken: "",
+  });
+  res.json({ message: "Verification successful" });
+};
+
+const resendVerifyEmail = async (req, res) => {
+  const { email } = req.body;
+  const { verificationToken } = req.params;
+  const user = User.findOne({ email });
+  if (!user) {
+    res.json(400, "missing required field email");
+  }
+  if (user.verify) {
+    res.json(400, "Verification has already been passed");
+  }
+  const transport = nodemailer.createTransport({
+    host: "sandbox.smtp.mailtrap.io",
+    port: 2525,
+    auth: {
+      user: "3961a8d39e9e5f",
+      pass: "bccd33d93d5105",
+    },
+  });
+  const verifyEmail = {
+    from: "App admin <example@mail.ua>",
+    to: "q@example.com",
+    subject: "Test",
+    html: `<a href="${BASE_URL}/users/verify/${verificationToken}">Click to verify</a>`,
+    text: "Test email",
+  };
+
+  await transport.sendMail(verifyEmail);
+
+  res.json({ message: "Verification email sent" });
+};
+
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -78,6 +117,10 @@ const login = async (req, res) => {
 
   if (!user) {
     throw HttpError(401, "Email or password is wrong");
+  }
+
+  if (!user.verify) {
+    throw HttpError(404, "Email not verified");
   }
   const comparePassword = await bcrypt.compare(password, user.password);
   if (!comparePassword) {
@@ -155,4 +198,6 @@ module.exports = {
   logout: ctrlWrapper(logout),
   updateSubscription: ctrlWrapper(updateSubscription),
   updateAvatar: ctrlWrapper(updateAvatar),
+  verifyEmail: ctrlWrapper(verifyEmail),
+  resendVerifyEmail: ctrlWrapper(resendVerifyEmail),
 };
