@@ -74,20 +74,20 @@ const verifyEmail = async (req, res) => {
   }
   await User.findByIdAndUpdate(user._id, {
     verify: true,
-    verificationToken: "",
+    verificationToken: null,
   });
   res.json({ message: "Verification successful" });
 };
 
 const resendVerifyEmail = async (req, res) => {
   const { email } = req.body;
-  const user = User.findOne({ email });
+  const user = await User.findOne({ email });
 
   if (!user) {
     throw HttpError(400, "missing required field email");
   }
   if (user.verify) {
-    res.json({ message: "Verification has already been passed" });
+    throw HttpError(400, "Verification has already been passed");
   }
 
   const transport = nodemailer.createTransport({
